@@ -66,4 +66,75 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 		else:
 			return False
 
-# def get_instances
+#SQLITE3 HELPER FUNCTIONS START
+
+#As to not raise errors
+import sqlite3
+connection = sqlite3.connect(':memory:'); do = connection.cursor()
+do.execute("""CREATE TABLE projects (user TEXT, title TEXT, assets TEXT)""")
+connection.commit(); connection.close()
+
+
+def addProject(table, author, name, assets, connection=':memory:'):
+	connection = sqlite3.connect(connection)
+	do = connection.cursor()
+
+	do.execute(f"INSERT INTO {table} VALUES (?,?,?)", [author, name, assets])
+	connection.commit()
+	connection.close()
+
+
+def changeAuthor(table, id, new_author, connection=':memory:'):
+	connection = sqlite3.connect(connection)
+	do = connection.cursor()
+
+	do.execute(f"UPDATE {table} SET author = {new_author} WHERE rowid == {id}")
+	connection.commit()
+	connection.close()
+
+
+def changeAssets(table, id, new_assets, connection=':memory:'):
+	connection = sqlite3.connect(connection)
+	do = connection.cursor()
+
+	do.execute(f"UPDATE {table} SET assets = {new_assets} WHERE rowid == {id}")
+	connection.commit()
+	connection.close()
+
+
+def changeName(table, id, new_name, connection=':memory:'):
+	connection = sqlite3.connect(connection)
+	do = connection.cursor()
+
+	do.execute(f"UPDATE {table} SET name = {new_name} WHERE rowid == {id}")
+	connection.commit()
+	connection.close()
+
+
+def removeProject(table, id, connection=':memory:'):
+	connection = sqlite3.connect(connection)
+	do = connection.cursor()
+
+	do.execute(f"DELETE FROM {table} WHERE rowid == {id}")
+	connection.commit()
+	connection.close()
+
+
+def getProjects(table, clause = None, connection=':memory:'):
+	connection = sqlite3.connect(connection)
+	do = connection.cursor()
+
+	if clause is not None:
+		do.execute(f"SELECT rowid, * FROM {table} {clause}")
+		selections = do.fetchall()
+		connection.close()
+		return selections
+	else:
+		do.execute(f"SELECT rowid, * FROM {table}")
+		selections = do.fetchall()
+		connection.close()
+		return selections
+#END OF SQLITE3 HELPER FUNCTIONS
+
+
+

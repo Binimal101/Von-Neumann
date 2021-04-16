@@ -5,6 +5,9 @@ import discord
 from Channels import channel_dictionary
 from helper import *
 import sqlite3
+import urllib.request
+import os
+
 
 
 #Message logic imports
@@ -14,8 +17,8 @@ import pyjokes as joke
 
 #DISCORD.PY
 #initialising static variables
-TOKEN = ('ODI5MzU4NjcwMDQyMzY1OTky.YG2-cw.knL75wuhkKXH0bpAYSYnzqHguKw')
-GUILD = ('794843921501913108')
+TOKEN = os.environ['TOKEN']
+GUILD = os.environ['GUILD']
 
 #bot creation
 client = discord.Client()
@@ -58,15 +61,12 @@ async def on_message(message):
 	#TODO this is the main purpose of this bot, to help with event submission, this where the code will come together to use the database
 	elif is_calling_command(message.content, 'submit','project',current_channel=message.channel.id, allowed_channel=channel_dictionary["mods-chat"]):
 		#TODO, make lines in this command for uploading submission links, checking a submission for validity, and then creating project objects to plug into the database
-		for mess in message.content:	
-			the_message = mess
-			print(the_message)
-		#connection = sqlite3.connect('USER_PROJECTS.db')
 		
-		connection = sqlite3.connect(':memory:')
-		do = connection.cursor()
-		#do.execute("""CREATE TABLE projects (user text, title text, assets text)""") #ALREADY INITIATED A TABLE
+		"""ALL DATA WILL BE MANIPULATED VIA HELPER FUNCTIONS IN HELPER.py"""
+		#TODO implement this line with helper functions
 		#do.execute("INSERT INTO projects VALUES (?, ?, ?)", (object.retrieve_project_information())); connection.commit(); connection.close() #USE AS A TEMPLATE
+		
+
 		connection.close()
 
 		bot_com = client.get_channel(channel_dictionary["mods-chat"])
@@ -84,9 +84,3 @@ for key in channel_dictionary:
 	print(key, channel_dictionary[key])
 
 client.run(TOKEN)
-
-
-
-
-
-
