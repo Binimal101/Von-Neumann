@@ -14,7 +14,7 @@ import pyjokes as joke
 
 #DISCORD.PY
 #initialising static variables
-TOKEN = ('ODI5MzU4NjcwMDQyMzY1OTky.YG2-cw.Ak6kITYzT05sTkxj8ZcbT5bd6dg')
+TOKEN = ('ODI5MzU4NjcwMDQyMzY1OTky.YG2-cw.knL75wuhkKXH0bpAYSYnzqHguKw')
 GUILD = ('794843921501913108')
 
 #bot creation
