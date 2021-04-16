@@ -3,5 +3,9 @@ channel_dictionary = {
 	"bot_commands" : 828898842866221137,
 	"events" : 829910548669399050,
 	"mods-chat" : 828902637679411230,
+	"events" : 829910548669399050,
+	"partnerships" : 829736299577475083,
+	"group-projects" : 828891677996613662,
+	
 
 }
