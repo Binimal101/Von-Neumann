@@ -91,7 +91,7 @@ async def on_message(message):
 			id.append(x.id)
 
 		if is_admin(id):
-			limit = 0
+			limit = -1
 			for word in message.content:
 				if word.isdigit():
 					count = 0
@@ -104,7 +104,7 @@ async def on_message(message):
 					count += 1
 			
 			limit = int(limit)
-			await bot_com.purge(limit=(limit+1 if limit != 0 else 1000))
+			await bot_com.purge(limit=(limit+1 if limit != -1 else 1000))
 		else:
 			await bot_com.send("Ha, nice try nerd\nTry getting some perms first")
 	

@@ -16,7 +16,7 @@ def censor(message="hello",author=None):
 	message = message.split(" ")
 	for word in message:
 		if isVulgar(word):
-			message[message.index(word)] = ("#")*len(word)
+			message[message.index(word)] = ("#")*len(word)		#    "||" + word + "||"
 
 	message = " ".join(message)
 	if author is None:
