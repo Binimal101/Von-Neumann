@@ -8,6 +8,7 @@ authors = ["Stifled and Fickle"]
 python = "^3.8"
 "discord.py" = "^1.7.1"
 pyjokes = "^0.6.0"
+emoji = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 

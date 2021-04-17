@@ -17,6 +17,8 @@ class Project:
 	
 	#returns project information
 	def retrieve_project_information(self):
+		return self.project_author, self.project_name, self.project_assets
+	def retrieve_project_information_all(self):
 		return self.project_author, self.project_name, self.project_assets, self.upvotes, self.downvotes
 	
 	#setter instance methods
@@ -33,12 +35,11 @@ class Project:
 #Checks the string given from message.content as first arg, all other arguements is are required command names
 #Keyword arguement to set a prefix if any is wanted and to set where you want to listen for a command and where the command actually comes in from
 
-def is_calling_command(message_content,*command_names,current_channel=None,prefix=None,allowed_channel=None):
+def is_calling_command(message_content,*command_names,current_channel=None,prefix=None,allowed_channel=None,usr_roles=None,role_requirements=None):
 	command_names = [x for x in command_names]
 	for x in range(len(command_names)):
 		command_names[x] = command_names[x].lower()
 	message_content = message_content.lower()
-	
 	if current_channel is None or allowed_channel is None:
 		if prefix is None:
 			for command_name in command_names:
