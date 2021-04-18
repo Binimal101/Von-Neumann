@@ -1,13 +1,10 @@
 #importing modules
 
 #Main imports
-import discord
+import discord, sqlite3, os, urllib.request
 from Channels import *
 from Roles import *
 from helper import *
-import sqlite3
-import urllib.request
-import os
 
 
 #Message logic imports
@@ -92,16 +89,18 @@ async def on_message(message):
 
 		if is_admin(id):
 			limit = -1
+			count = 0
 			for word in message.content:
+				print(word)
 				if word.isdigit():
-					count = 0
 					#for word in message.content parses 12 as 1 then 2
 					#cycles thru and concatatnates 1 and 2 to make "12" then converts to int
 					if count != 0:
 						limit = limit + word
+						print(limit)
 					else:
 						limit = word
-					count += 1
+						count += 1
 			
 			limit = int(limit)
 			await bot_com.purge(limit=(limit+1 if limit != -1 else 1000))
