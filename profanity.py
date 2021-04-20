@@ -12,6 +12,7 @@ def isVulgar(message="hello"):
 	output = str(output); output = output[2:-1]; output = output[0].upper() + output[1:]
 	boolean = True if output == "True" else False
 	return boolean
+	
 def censor(message="hello",author=None):
 	message = message.split(" ")
 	for word in message:

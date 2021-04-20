@@ -5,7 +5,7 @@ import discord, sqlite3, os, urllib.request
 from Channels import *
 from Roles import *
 from helper import *
-
+from hashlib import sha256
 
 #Message logic imports
 from message_funcs import *
@@ -13,11 +13,15 @@ import pyjokes as joke
 from profanity import *
 
 
-#DISCORD.PY
-#initialising static variables
-TOKEN = os.environ['TOKEN']
-GUILD = os.environ['GUILD']
+#TO PREVENT VIEWERS FROM RUNNING THE BOT, PASSWORD WILL BE PINNED TO MOD-CHAT
+usr_password = sha256(input("ENTER ACTIVATION PASSWORD\n>>> ").encode()).hexdigest()
+if usr_password == os.environ['Password']:
+	#initialising static variables
+	os.system('cls' if os.name=='nt' else 'clear')
+	TOKEN = os.environ['TOKEN']
+	GUILD = os.environ['GUILD']
 
+#DISCORD.PY
 #bot creation
 client = discord.Client()
 
@@ -26,7 +30,6 @@ client = discord.Client()
 async def on_ready():
     bot_com = client.get_channel(channel_dictionary["bot_commands"])
     await bot_com.send("What's up? I'm back!")
-
 
 @client.event
 async def on_message(message):
@@ -54,7 +57,7 @@ async def on_message(message):
 		embed.add_field(name="Von+Submit+Project", value="Von will walk you through how to submit a user project", inline=False)
 		
 		await bot_com.send(embed=embed)
-		
+
 
 	elif is_calling_command(message.content, 'time', current_channel=message.channel.id, allowed_channel=channel_dictionary["bot_commands"]):
 		hour, minute, ampm = unpack_time()
@@ -67,13 +70,15 @@ async def on_message(message):
 		
 		"""ALL DATA WILL BE MANIPULATED VIA HELPER FUNCTIONS IN HELPER.py"""
 		#TODO implement this line with helper functions
+		
 		#do.execute("INSERT INTO projects VALUES (?, ?, ?)", (object.retrieve_project_information())); connection.commit(); connection.close() #USE AS A TEMPLATE
 		
+		#@ADMIN_PERMS message.channel.permissions_for(message.author).administrator
 
 		connection.close()
 
 		bot_com = client.get_channel(channel_dictionary["mods-chat"])
-		await bot_com.send("WORKING")
+		await bot_com.send("In Dev")
 
 	elif is_calling_command(message.content,'eval',current_channel=message.channel.id,allowed_channel=channel_dictionary['bot_commands']):
 		bot_com = client.get_channel(channel_dictionary["bot_commands"])	

@@ -72,7 +72,7 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 #As to not raise errors
 import sqlite3
 connection = sqlite3.connect(':memory:'); do = connection.cursor()
-do.execute("""CREATE TABLE projects (user TEXT, title TEXT, assets TEXT)""")
+do.execute("""CREATE TABLE projects (author TEXT, name TEXT, assets TEXT)""")
 connection.commit(); connection.close()
 
 
