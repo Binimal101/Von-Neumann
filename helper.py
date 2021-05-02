@@ -1,3 +1,5 @@
+import datetime
+import sqlite3
 #HELPER CLASSES AND FUNCTIONS
 class Project:
 	#Total project count submitted by community TODO count projects cached from previous runtimes via searching the db
@@ -35,7 +37,7 @@ class Project:
 #Checks the string given from message.content as first arg, all other arguements is are required command names
 #Keyword arguement to set a prefix if any is wanted and to set where you want to listen for a command and where the command actually comes in from
 
-def is_calling_command(message_content,*command_names,current_channel=None,prefix=None,allowed_channel=None,usr_roles=None,role_requirements=None):
+def is_calling_command(message_content,*command_names,current_channel=None,prefix=None,allowed_channel=None):
 	command_names = [x for x in command_names]
 	for x in range(len(command_names)):
 		command_names[x] = command_names[x].lower()
@@ -48,7 +50,9 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 			return True
 		else:
 			for command_name in command_names:
-				if not (prefix + command_name in message_content or (command_name in message_content and ("neumann" in message_content or "von" in message_content))):
+				if message_content.startswith(prefix + command_name):
+					continue
+				else:
 					return False
 			return True
 	else:
@@ -60,7 +64,7 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 				return True
 			else:
 				for command_name in command_names:
-					if not (prefix + command_name in message_content or (command_name in message_content and ("neumann" in message_content or "von" in message_content))):
+					if not (prefix + command_name in message_content):
 						return False
 				return True
 						
@@ -68,9 +72,6 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 			return False
 
 #SQLITE3 HELPER FUNCTIONS START
-
-#As to not raise errors
-import sqlite3
 connection = sqlite3.connect(':memory:'); do = connection.cursor()
 do.execute("""CREATE TABLE projects (author TEXT, name TEXT, assets TEXT)""")
 connection.commit(); connection.close()
@@ -137,5 +138,41 @@ def getProjects(table, clause = None, connection=':memory:'):
 		return selections
 #END OF SQLITE3 HELPER FUNCTIONS
 
+def unpack_math(message):
+	equation = ""
+	look_for = "1234567890+-/*^.()"
+	for char in message:
+		equation = equation + (char if char in look_for else "")
+	return equation
 
+def get_ids(message):
+	message = message.replace("<","");message = message.replace(">","");message = message.replace("@","");message = message.replace("!","")
+	message = message.split()
+	for thing in message:
+		if thing.isdigit():
+			message[message.index(thing)] = message[message.index(thing)] + " "
+			continue
+		else:
+			del message[message.index(thing)]
+	message[0] = message[0] + " "
+	message = "".join(message)
+	message = message.split(" ")
+	del message[-1];
+	return message
+
+def get_reason(message):
+	if "= " in message.lower() and "r" in message.lower():
+		reason = message[message.index("= ")+2:]
+		return reason
+	elif "=" in message.lower() and "r" in message.lower():
+		reason = message[message.index("=")+1:]
+		return reason
+	else:
+		return None
+
+def get_timestamp():
+	obj = datetime.datetime.now()
+	year, month, day = str(obj.year), str(obj.month), str(obj.day)
+	timestamp = f"{year}-{month}-{day}"
+	return timestamp
 

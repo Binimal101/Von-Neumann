@@ -1,8 +1,10 @@
 import urllib.request
+from info import *
 #Contains huge list of escape emoji's
 from emoji import UNICODE_EMOJI
 
-#TODO fix emoji cheat where if you do ":happy:fucker" it will raise an error and skip over the sentence
+selective = unpackCustomCurses()
+exceptions = unpackExceptions()
 def isVulgar(message="hello"):
 	boolean = bool
 	message = message.split(" ")
@@ -16,9 +18,8 @@ def isVulgar(message="hello"):
 def censor(message="hello",author=None):
 	message = message.split(" ")
 	for word in message:
-		if isVulgar(word):
+		if (isVulgar(word) or word in selective) and not word in exceptions:
 			message[message.index(word)] = ("#")*len(word)		#    "||" + word + "||"
-
 	message = " ".join(message)
 	if author is None:
 		return message
