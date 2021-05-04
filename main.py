@@ -1,7 +1,8 @@
-#importing modules
-
+#WILL IMPACT RUN FOREVER FUNCTION
+testing = False
 #Main imports
-import discord, sqlite3, os, urllib.request
+from run_forever import run_forever #RUN_FOREVER VIA UPTIMEROBOTS
+import discord, sqlite3, os, random, urllib.request
 import pyjokes as joke
 from hashlib import sha256
 from discord.ext import commands
@@ -13,25 +14,34 @@ from profanity import *
 #On Start Custom Info
 link_chars = [".net","www.","https://",".com",".org","http",".co"] #gets rid of any links with at least one of these in the string, Expandable
 prefix = "!"
+
 logs_enabled = True
 channel_creator = True
-link_killer = True
+link_killer = False
 profanity_filter = True
 ban_kick = True
 
 os.system('cls' if os.name=='nt' else 'clear')
+
 #TO PREVENT VIEWERS FROM RUNNING THE BOT, PASSWORD WILL BE PINNED TO MOD-CHAT
-usr_password = sha256(input("ENTER ACTIVATION PASSWORD\n>>> ").encode()).hexdigest()
-if usr_password == os.environ['Password']:
-	os.system('cls' if os.name=='nt' else 'clear')
-	TOKEN = os.environ['TOKEN']
+
+#usr_password = sha256(input("ENTER ACTIVATION PASSWORD\n>>> ").encode()).hexdigest()
+#if usr_password == os.environ['Password']:
+os.system('cls' if os.name=='nt' else 'clear')
+TOKEN = os.environ['TOKEN']
 print("**ONLINE**")
+
 #DISCORD.PY
+
 #bot creation
+
 intents = discord.Intents.default()
 intents.members = True
-client = discord.Client(intents=intents)
+activity = discord.Activity(type=discord.ActivityType.listening, name="developer team") #Gives bot a custom status :pog:
+client = discord.Client(intents=intents,activity=activity)
+
 #events
+
 @client.event
 async def on_ready():
     connection= client.get_channel(channel_dictionary["bot_commands"])
@@ -57,30 +67,27 @@ async def on_message(message):
 	#So bot will not respond inside a DMChannel
 	if isinstance(message.channel, discord.channel.DMChannel):
 		return
+
 	connection = message.channel
 	guild = message.channel.guild.id
-	
-	if channel_creator:
-		#ADDS THESE CHANNELS TO SERVERS WITHOUT THEM
-		if logs_enabled:
-			ban_logger = discord.utils.get(connection.guild.text_channels, name="ban_logs")
-			if ban_logger is None:
-				await connection.guild.create_text_channel('ban_logs')
-				ban_logger = discord.utils.get(connection.guild.text_channels, name="ban_logs")
-				await ban_logger.set_permissions(connection.guild.default_role, send_messages=False)
+	if logs_enabled and channel_creator:
 
+		ban_logger = discord.utils.get(connection.guild.text_channels, name="ban_logs")
+		if ban_logger is None: #ADDS THESE CHANNELS TO SERVERS WITHOUT THEM
+			await connection.guild.create_text_channel('ban_logs')
+			ban_logger = discord.utils.get(connection.guild.text_channels, name="ban_logs")
+			await ban_logger.set_permissions(connection.guild.default_role, send_messages=False)
+
+		kick_logger = discord.utils.get(connection.guild.text_channels, name="kick_logs")
+		if kick_logger is None: #ADDS THESE CHANNELS TO SERVERS WITHOUT THEM
+			await connection.guild.create_text_channel('kick_logs')
 			kick_logger = discord.utils.get(connection.guild.text_channels, name="kick_logs")
-			if kick_logger is None:
-				await connection.guild.create_text_channel('kick_logs')
-				kick_logger = discord.utils.get(connection.guild.text_channels, name="kick_logs")
-				await kick_logger.set_permissions(connection.guild.default_role, send_messages=False)
-			
-			try:
-				kick_log_id = discord.utils.get(connection.guild.text_channels, name="kick_logs").id
-				ban_log_id = discord.utils.get(connection.guild.text_channels, name="ban_logs").id
-			except:
-				pass
-		else:
+			await kick_logger.set_permissions(connection.guild.default_role, send_messages=False)
+		
+		try:
+			kick_log_id = discord.utils.get(connection.guild.text_channels, name="kick_logs").id
+			ban_log_id = discord.utils.get(connection.guild.text_channels, name="ban_logs").id
+		except:
 			pass
 	
 	#Creates Objects From ids
@@ -137,6 +144,11 @@ async def on_message(message):
 		connection= client.get_channel(channel_dictionary["bot_commands"])
 		await connection.send(f'I got one for ya,\n"{joke.get_joke()}"')
 
+	elif is_calling_command(message.content, "quote"):
+		connectiion = message.channel
+		quote=f"```\n{random.choice(unpackVonQuotes())}\n\n~John Von Neumann\n```"
+		await connection.send(quote)
+
 	elif is_calling_command(message.content, 'help'):
 		connection= client.get_channel(channel_dictionary["bot_commands"])
 		#initialising command embed
@@ -145,18 +157,39 @@ async def on_message(message):
 		embed.add_field(name="Von+Eval", value="Von will solve basic math problems", inline=False)
 		embed.add_field(name="Von+Invite", value="Von will give you the link to invite him to your server", inline=False)
 		embed.add_field(name="Von+Help", value="Von will show you all commands", inline=False)
+		embed.add_field(name="Von+Quote", value="Von will recite a quote from the real Von Neumann", inline=False)
 		embed.add_field(name="Von+Submit+Project", value="Von will walk you through how to submit a user project", inline=False)
+		embed.set_thumbnail(url=client.user.avatar_url)
 		await dm_user(id=message.author.id,embed=embed)
-
 	
 	#TODO this is the main purpose of this bot, to help with event submission, this where the code will come together to use the database
-	elif is_calling_command(message.content, 'submit','project'):
-		#TODO, make lines in this command for uploading submission links, checking a submission for validity, and then creating project objects to plug into the database
-		
-		"""ALL DATA WILL BE MANIPULATED VIA HELPER FUNCTIONS IN HELPER.py"""
-		#addProject("Projects",object.retrieve_project_information())
 
-		connection= client.get_channel(channel_dictionary["mods-chat"])
+	elif is_calling_command(message.content, 'submit','project'):
+		def check(mess):
+			return mess.author == mess.author and mess.channel == mess.channel
+		
+		#PROJECT INFO COLLECTION
+
+		static_connection = message.channel
+		await static_connection.send("Enter Your Projects Signature:")
+		signature = await client.wait_for('message',check=check)
+
+		static_connection = signature.channel
+		await static_connection.send("Enter the Name of Your Project: ")
+		name = await client.wait_for('message',check=check)
+
+		static_connection = name.channel
+		await static_connection.send("Enter the Link of Your Project(one only): ")
+		asset = await client.wait_for('message',check=check)
+
+		#INITIALISING NEW INSTANCE OF PROJECT CLASS
+		new_project = Project(signature.content,name.content,asset.content)
+
+		#TODO, MAKE A VALIDITY CHECKER INSTANCE FUNCTION FOR EACH new_project OBJECT
+
+		addProject(new_project)
+
+		connection = message.channel
 		await connection.send("In Dev")
 
 	elif is_calling_command(message.content,'eval',current_channel=message.channel.id,allowed_channel=channel_dictionary['bot_commands']):
@@ -180,7 +213,9 @@ async def on_message(message):
 		
 		limit = int(limit)
 		await connection.purge(limit=(limit+1 if limit != -1 else 1000))
-
+	elif is_calling_command(message.content,"hi"):
+		connection = message.channel
+		await connection.send(f"hi {message.author.name}!")
 	#@BAN COMMAND
 	elif is_calling_command(message.content,"ban",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
 		connection = client.get_channel(message.channel.id)
@@ -210,7 +245,9 @@ async def on_message(message):
 			await dm_user(id=obj.id,embed=embed)
 			await connection.guild.kick(obj, reason=reason)
 		await connection.send("Kicked!")
+
 		#@KICK_LOGS
+    
 		if logs_enabled and channel_creator:
 			connection = client.get_channel(kick_log_id)
 			embed=discord.Embed(title="KICK_LOG", color=0x00ffee)
@@ -227,8 +264,10 @@ async def on_message(message):
 			connection= client.get_channel(channel_dictionary[channel])
 			await connection.send(".")
 			await connection.purge(limit=1)
-	
+		
+
 	else:
 		return
 
+run_forever() if testing == False else None
 client.run(TOKEN)

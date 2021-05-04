@@ -1,5 +1,6 @@
 import datetime
 import sqlite3
+import pprint
 #HELPER CLASSES AND FUNCTIONS
 class Project:
 	#Total project count submitted by community TODO count projects cached from previous runtimes via searching the db
@@ -71,22 +72,24 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 		else:
 			return False
 
-#SQLITE3 HELPER FUNCTIONS START
-connection = sqlite3.connect(':memory:'); do = connection.cursor()
-do.execute("""CREATE TABLE projects (author TEXT, name TEXT, assets TEXT)""")
-connection.commit(); connection.close()
+#SQLITE3 HELPER FUNCTIONS START\
+connection = sqlite3.connect('USER_PROJECTS.db')
+def create_projects_db():
+	connection = sqlite3.connect('USER_PROJECTS.db'); do = connection.cursor()
+	do.execute("""CREATE TABLE projects (author TEXT, name TEXT, assets TEXT)""")
+	connection.commit(); connection.close()
 
 
-def addProject(table, author, name, assets, connection=':memory:'):
-	connection = sqlite3.connect(connection)
+def addProject(project):
+	connection = sqlite3.connect('USER_PROJECTS.db')
 	do = connection.cursor()
 
-	do.execute(f"INSERT INTO {table} VALUES (?,?,?)", [author, name, assets])
+	do.execute("INSERT INTO Projects VALUES (?,?,?)", [project.project_author, project.project_name, project.project_assets])
 	connection.commit()
 	connection.close()
 
 
-def changeAuthor(table, id, new_author, connection=':memory:'):
+def changeAuthor(table, id, new_author, connection='USER_PROJECTS.db'):
 	connection = sqlite3.connect(connection)
 	do = connection.cursor()
 
@@ -95,7 +98,7 @@ def changeAuthor(table, id, new_author, connection=':memory:'):
 	connection.close()
 
 
-def changeAssets(table, id, new_assets, connection=':memory:'):
+def changeAssets(table, id, new_assets, connection='USER_PROJECTS.db'):
 	connection = sqlite3.connect(connection)
 	do = connection.cursor()
 
@@ -104,7 +107,7 @@ def changeAssets(table, id, new_assets, connection=':memory:'):
 	connection.close()
 
 
-def changeName(table, id, new_name, connection=':memory:'):
+def changeName(table, id, new_name, connection='USER_PROJECTS.db'):
 	connection = sqlite3.connect(connection)
 	do = connection.cursor()
 
@@ -113,7 +116,7 @@ def changeName(table, id, new_name, connection=':memory:'):
 	connection.close()
 
 
-def removeProject(table, id, connection=':memory:'):
+def removeProject(table, id, connection='USER_PROJECTS.db'):
 	connection = sqlite3.connect(connection)
 	do = connection.cursor()
 
@@ -122,7 +125,7 @@ def removeProject(table, id, connection=':memory:'):
 	connection.close()
 
 
-def getProjects(table, clause = None, connection=':memory:'):
+def getProjects(table, clause = None, connection='USER_PROJECTS.db'):
 	connection = sqlite3.connect(connection)
 	do = connection.cursor()
 
@@ -135,7 +138,8 @@ def getProjects(table, clause = None, connection=':memory:'):
 		do.execute(f"SELECT rowid, * FROM {table}")
 		selections = do.fetchall()
 		connection.close()
-		return selections
+		pprint.pprint(selections)
+
 #END OF SQLITE3 HELPER FUNCTIONS
 
 def unpack_math(message):

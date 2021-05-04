@@ -1,18 +1,22 @@
 import urllib.request
 from info import *
-#Contains huge list of escape emoji's
-from emoji import UNICODE_EMOJI
 
 selective = unpackCustomCurses()
 exceptions = unpackExceptions()
+
 def isVulgar(message="hello"):
-	boolean = bool
+	boolean = False
 	message = message.split(" ")
-	message = "+".join(message)
-	connection = urllib.request.urlopen("http://www.wdylike.appspot.com/?q=" + message)
-	output = connection.read(); connection.close
-	output = str(output); output = output[2:-1]; output = output[0].upper() + output[1:]
-	boolean = True if output == "True" else False
+	# message = "+".join(message)
+	for word in message:
+		try:
+			connection = urllib.request.urlopen("http://www.wdylike.appspot.com/?q=" + word)
+			output = connection.read(); connection.close
+			output = str(output); output = output[2:-1]; output = output[0].upper() + output[1:]
+			boolean = True if output == "True" or boolean else False
+			print(boolean, word, message)
+		except UnicodeEncodeError:
+			continue
 	return boolean
 	
 def censor(message="hello",author=None):
