@@ -20,13 +20,17 @@ channel_dictionary = {
 	"discord_bot" : 828986793436250132,
 	"database" : 829889952283623475,
 	"gaming" : 828918183645282354,
-
+	"ban_logs" : 837726869520252958,
+	"kick_logs" : 837729254803243078,
+	"guild_logs" : 837726761005482034,
+	
 }
 role_dictionary = {
 	"@everyone" : 794843921501913108,
 	"moderators" : 828880659811401731, 
 	"head-moderators" : 829381821758046219,
-	"creator" : 828881826927607819
+	"creator" : 828881826927607819,
+	"mixed-engineers" : 838658069771583518,
 }
 
 ADMIN = [role_dictionary["creator"],role_dictionary["head-moderators"],role_dictionary["moderators"]]
@@ -44,6 +48,15 @@ def unpackCustomCurses():
 		"semen",
 		"faggot",
 		"bitch",
+		"F̷U̶C̸K̸ ̵Y̴O̵U̸",
+		"F̷U̶C̸K̸",
+		"F̵U̶C̵K̴",
+		"F̷̐̂Ù̷̾C̸͌̑K̷͂͆",
+		"F̵̍͐U̶̍͗C̸̓͝K̶̀̉",
+		"slut",
+		"whore",
+		"fûck",
+
 		
 	]
 	return listOfCurses
@@ -54,7 +67,14 @@ def unpackExceptions():
 		"grass",
 		"lass",
 		"brass",
-
+		"classroom",
+		"assume",
+		"assuming",
+		"passwords",
+		"password",
+		"pass",
+		"passes",
+		"passed",
 	]
 	return listOfExceptions
 	

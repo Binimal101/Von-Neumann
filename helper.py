@@ -46,7 +46,7 @@ def is_calling_command(message_content,*command_names,current_channel=None,prefi
 	if current_channel is None or allowed_channel is None:
 		if prefix is None:
 			for command_name in command_names:
-				if not (command_name in message_content and ("neumann" in message_content or "von" in message_content)):
+				if not (command_name in message_content and ("neumann" in message_content or "von" in message_content or '829358670042365992' in message_content)):
 					return False
 			return True
 		else:

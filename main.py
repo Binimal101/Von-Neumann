@@ -36,17 +36,64 @@ print("**ONLINE**")
 #bot creation
 
 intents = discord.Intents.default()
-intents.members = True
+intents = intents.all()
+
 activity = discord.Activity(type=discord.ActivityType.listening, name="developer team") #Gives bot a custom status :pog:
-client = discord.Client(intents=intents,activity=activity)
+permissions = discord.Permissions(administrator=True)
+client = discord.Client(intents=intents,activity=activity,permissions=permissions)
 
 #events
 
 @client.event
 async def on_ready():
     connection= client.get_channel(channel_dictionary["bot_commands"])
-    await connection.send("What's up? I'm back!")
+    await connection.send("What's up Mixed Engineers")
 
+@client.event
+async def on_raw_reaction_add(payload):
+	#payload.emoji returns the literal emoji, cannot compare with == operator, so hash it and compare it then
+	Guild = client.get_guild(payload.guild_id) #gets guild object from the parameter, should work on multiple servers
+	if Guild.id != 794843921501913108: #to just keep this while its in the works on this server
+		return
+	
+	#Rules channel Only react roles
+	if payload.message_id == 839849973411086386:
+		Channel = discord.utils.get(Guild.channels, name="📝rules")
+		Message = await Channel.fetch_message(839849973411086386)
+		#Unlock Emote
+		if sha256(payload.emoji.name.encode()).hexdigest() == '4eec930975e4c54d690a82bd3be37c58a7c35e7021b367474f13eebdc7fd211d':
+			role = discord.utils.get(Guild.roles, name="mixed engineers") #gets the role obj for the role we are going to give to the reactor
+			reactor = discord.utils.find(lambda u: u.id == payload.user_id, Guild.members) #searches through guild.memberes for the member object with the id of the reactor
+			#Will run if info above is viable
+			if reactor is not None and not payload.user_id == client.user.id: #makes sure the bot doesn't get the role when he adds the roles back for other users to react to
+				await reactor.add_roles(role)
+				snowflake = discord.Object(reactor.id)
+				await Message.remove_reaction(payload.emoji, snowflake)
+
+	#React Roles channel only react roles
+	elif payload.message_id == 839855261623517234:
+		Channel = discord.utils.get(Guild.channels, name="react_roles")
+		Message = await Channel.fetch_message(839855261623517234)
+		Emoji = payload.emoji
+		Role = discord.utils.find(lambda x: x.name == Emoji.name, Guild.roles) #should work as long as role name and emoji name are the same
+		reactor = discord.utils.find(lambda u: u.id == payload.user_id, Guild.members)
+		#Will run if info above is viable
+		if reactor is not None and not payload.user_id == client.user.id:
+			if Role in reactor.roles:
+				await reactor.remove_roles(Role)
+			else:
+				await reactor.add_roles(Role)
+			#Removes reactors reaction
+			snowflake = discord.Object(reactor.id)
+			await Message.remove_reaction(Emoji, snowflake)
+	
+		
+
+	
+	else:
+		return
+		
+	
 @client.event
 async def on_guild_join(guild):
 	timestamp = get_timestamp()
@@ -69,7 +116,8 @@ async def on_message(message):
 		return
 
 	connection = message.channel
-	guild = message.channel.guild.id
+	guild = client.get_guild(message.channel.guild.id)
+	
 	if logs_enabled and channel_creator:
 
 		ban_logger = discord.utils.get(connection.guild.text_channels, name="ban_logs")
@@ -98,6 +146,13 @@ async def on_message(message):
 			if id is not None:
 				objects.append(discord.Object(id))
 		return objects
+	
+	async def add_reactions_to_message(emoji_name,channel_name,message_id):
+		Guild = client.get_guild(794843921501913108)
+		Channel = discord.utils.get(Guild.channels, name=channel_name)
+		Message = await Channel.fetch_message(message_id)
+		Emoji = discord.utils.find(lambda x: x.name == emoji_name,Guild.emojis)
+		await Message.add_reaction(Emoji)
 
 	async def dm_user(message=None,embed=None,id=None):
 		if id is not None:
@@ -140,7 +195,7 @@ async def on_message(message):
 		except:
 			pass
 
-	elif is_calling_command(message.content, 'joke', 'tell'):
+	elif is_calling_command(message.content, 'joke', 'tell',allowed_channel=channel_dictionary["bot_commands"],current_channel=channel_dictionary["bot_commands"]):
 		connection= client.get_channel(channel_dictionary["bot_commands"])
 		await connection.send(f'I got one for ya,\n"{joke.get_joke()}"')
 
@@ -210,22 +265,27 @@ async def on_message(message):
 				else:
 					limit = word
 					count += 1
-		
 		limit = int(limit)
 		await connection.purge(limit=(limit+1 if limit != -1 else 1000))
+
+
 	elif is_calling_command(message.content,"hi"):
 		connection = message.channel
 		await connection.send(f"hi {message.author.name}!")
+
+
 	#@BAN COMMAND
 	elif is_calling_command(message.content,"ban",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
 		connection = client.get_channel(message.channel.id)
 		reason = get_reason(message.content);reason = "Cause we said so" if reason is None else f"Reason: \"{get_reason(message.content)}\""
 		for obj in get_member_objects(message.content):
 			embed=discord.Embed(title=f"You have been banned from {message.channel.guild.name}!", description=reason, color=0xff0000); embed.set_thumbnail(url="https://i.redd.it/e77eetckule11.png")
-			await dm_user(id=obj.id,embed=embed)
+			try:
+				await dm_user(id=obj.id,embed=embed)
+			except:
+				pass
 			await connection.guild.ban(obj, reason=reason)
 		await connection.send("Banned!")
-		
 		#@BAN_LOGS
 		if logs_enabled and channel_creator:
 			connection = client.get_channel(ban_log_id)
@@ -235,6 +295,8 @@ async def on_message(message):
 				embed.add_field(name=f"{message.author} has banned: ", value=f"{member.name}: {id_num}", inline=False)
 			embed.set_footer(text=reason)
 			await connection.send(embed=embed)
+
+
 	#@KICK COMMAND	
 	elif is_calling_command(message.content,"kick",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
 		connection = client.get_channel(message.channel.id)
@@ -242,12 +304,13 @@ async def on_message(message):
 		connection = client.get_channel(message.channel.id)
 		for obj in get_member_objects(message.content):
 			embed=discord.Embed(title=f"You have been kicked from {message.channel.guild.name}!", description=reason, color=0xff0000); embed.set_thumbnail(url="https://irp-cdn.multiscreensite.com/87e31e8f/dms3rep/multi/blog-post-111-1.jpg")
-			await dm_user(id=obj.id,embed=embed)
+			try:
+				await dm_user(id=obj.id,embed=embed)
+			except:
+				pass
 			await connection.guild.kick(obj, reason=reason)
 		await connection.send("Kicked!")
-
 		#@KICK_LOGS
-    
 		if logs_enabled and channel_creator:
 			connection = client.get_channel(kick_log_id)
 			embed=discord.Embed(title="KICK_LOG", color=0x00ffee)
@@ -257,6 +320,25 @@ async def on_message(message):
 			embed.set_footer(text=reason)
 			await connection.send(embed=embed)
 
+
+	elif is_calling_command(message.content,"unban",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
+		for id_num in get_ids(message.content):
+			member = await client.fetch_user(int(id_num))
+			await guild.unban(discord.Object(member.id))
+
+			#Creates the embed for the dm and attemps to dm the user
+			embedd=discord.Embed(title=f"You have been unbanned from {message.channel.guild.name}!", description="dw about it", color=0xff0000)
+			try:
+				await dm_user(id=id_num,embed=embedd)
+			except:
+				pass
+			#Logs the unban in ban_logs
+			embed=discord.Embed(title="UNBAN_LOG", color=0x00ffee)
+			embed.add_field(name=f"{message.author} has unbanned: ", value=f"{member.name}: {id_num}", inline=False)
+			connection = client.get_channel(channel_dictionary["ban_logs"])
+			await connection.send(embed=embed)
+
+
 	#Funny	
 	elif is_calling_command(message.content,'wake','channels') and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
 		await message.delete()
@@ -264,10 +346,13 @@ async def on_message(message):
 			connection= client.get_channel(channel_dictionary[channel])
 			await connection.send(".")
 			await connection.purge(limit=1)
-		
+
+
+	elif is_calling_command(message.content,"test") and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
+		pass
 
 	else:
 		return
 
-run_forever() if testing == False else None
+run_forever() if not testing else None
 client.run(TOKEN)
