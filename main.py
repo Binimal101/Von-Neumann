@@ -7,7 +7,7 @@ import pyjokes as joke
 from hashlib import sha256
 from discord.ext import commands
 from discord.ext.commands import *
-#File Imports
+#File Imports 
 from info import *
 from helper import *
 from profanity import *
@@ -60,14 +60,6 @@ async def dm_user(message=None,embed=None,id=None):
 		else:
 			return
 
-#this was a favor aly asked me for, will delete after its done
-async def dm_aly():
-	while True:
-		if convert_est():
-			await dm_user(id=731736115337494589,message="REMINDER, BUMP SERVER!")
-			await asyncio.sleep(30)
-		else:
-			await asyncio.sleep(5)
 #events
 @client.event
 async def on_ready():
