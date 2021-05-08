@@ -16,11 +16,10 @@ def isVulgar(message="hello"):
 		except UnicodeEncodeError or InvalidURL:
 			continue
 	return boolean
-	
 def censor(message="hello",author=None):
 	message = message.split(" ")
 	for word in message:
-		if (isVulgar(word) or word in selective) and not word.lower() in exceptions:
+		if (isVulgar(word) or word.lower() in selective) and not word.lower() in exceptions:
 			message[message.index(word)] = ("#")*len(word)		#    "||" + word + "||"
 	message = " ".join(message)
 	if author is None:

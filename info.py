@@ -56,6 +56,7 @@ def unpackCustomCurses():
 		"slut",
 		"whore",
 		"fûck",
+		"peenis",
 
 		
 	]
@@ -75,6 +76,8 @@ def unpackExceptions():
 		"pass",
 		"passes",
 		"passed",
+		"chassis",
+		
 	]
 	return listOfExceptions
 	

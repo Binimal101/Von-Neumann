@@ -1,6 +1,9 @@
 import datetime
 import sqlite3
 import pprint
+from pytz import timezone
+from profanity import *
+allowed_link_chars = ["github",".com","youtube","www."]
 #HELPER CLASSES AND FUNCTIONS
 class Project:
 	#Total project count submitted by community TODO count projects cached from previous runtimes via searching the db
@@ -9,9 +12,12 @@ class Project:
 	def __init__(self, project_author, project_name, project_assets):
 		Project.total += 1
 		#STATIC VARIABLES
-		self.project_author = project_author
-		self.project_name = project_name
-		self.project_assets = project_assets
+		if not isVulgar(project_author) and not isVulgar(project_name) and len([x for x in allowed_link_chars if x in project_assets]) < 1:
+			self.project_author = project_author
+			self.project_name = project_name
+			self.project_assets = project_assets
+		else:
+			return None
 		#LIVE VARIABLES
 		self.upvotes = 0
 		self.downvotes = 0
@@ -161,7 +167,11 @@ def get_ids(message):
 	message[0] = message[0] + " "
 	message = "".join(message)
 	message = message.split(" ")
-	del message[-1];
+	count = 0
+	for _ in range(2): #to fully cleanse all elements
+		for id in message:
+			if len(str(id)) != 18:
+				del message[message.index(id)]
 	return message
 
 def get_reason(message):
@@ -173,6 +183,32 @@ def get_reason(message):
 		return reason
 	else:
 		return None
+
+def get_mute_duration(message):
+	if "= " in message.lower() and "d" in message.lower():
+		reason = message[message.index("= ")+2:]
+		return reason
+	elif "=" in message.lower() and "d" in message.lower():
+		reason = message[message.index("=")+1:]
+		return reason
+	else:
+		return None
+
+def get_slowmode_timer(message):
+	if "= " in message.lower() and "s" in message.lower():
+		reason = message[message.index("= ")+2:]
+		return reason
+	elif "=" in message.lower() and "s" in message.lower():
+		reason = message[message.index("=")+1:]
+		return reason
+	else:
+		return None
+
+def convert_est():
+	tz = timezone("GMT")
+	now = datetime.datetime.now(tz)
+	hour, minute = now.hour, now.minute
+	return hour % 6 == 0 and now.month == 6 and now.day <= 4
 
 def get_timestamp():
 	obj = datetime.datetime.now()
