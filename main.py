@@ -7,7 +7,8 @@ import pyjokes as joke
 from hashlib import sha256
 from discord.ext import commands
 from discord.ext.commands import *
-#File Imports 
+import replit, getpass
+#File Imports
 from info import *
 from helper import *
 from profanity import *
@@ -19,14 +20,17 @@ channel_creator = False
 link_killer = False
 profanity_filter = True
 ban_kick = True
+ratetimer = 0
+rates = {}
+ratelimited_users = {}
 
-os.system('cls' if os.name=='nt' else 'clear')
+replit.clear()
 
 #TO PREVENT VIEWERS FROM RUNNING THE BOT, PASSWORD WILL BE PINNED TO MOD-CHAT
 
-usr_password = sha256(input("ENTER ACTIVATION PASSWORD\n>>> ").encode()).hexdigest()
+usr_password = sha256(getpass("ENTER ACTIVATION PASSWORD\n>>> ").encode()).hexdigest()
 if usr_password == os.environ['Password']:
-	os.system('cls' if os.name=='nt' else 'clear')
+	replit.clear()
 	TOKEN = os.environ['TOKEN']
 	print("**ONLINE**")
 
@@ -41,38 +45,76 @@ activity = discord.Activity(type=discord.ActivityType.listening, name="developer
 permissions = discord.Permissions(administrator=True)
 client = discord.Client(intents=intents,activity=activity,permissions=permissions)
 
+
 #Global Scoped Helper Function
 async def dm_user(message=None,embed=None,id=None):
 		if id is not None:
+			recipient = await client.fetch_user(id)
 			if message is not None and embed is None:
-				recipient = await client.fetch_user(id)
 				await recipient.send(message)
 
 			elif message is None and embed is not None:
-				recipient = await client.fetch_user(id)
 				await recipient.send(embed=embed)
 
 			elif message is not None and embed is not None:
-				recipient = await client.fetch_user(id)
 				await recipient.send(message, embed=embed)
-			else:
-				return
-		else:
-			return
+
+async def ratecheck(ctx):
+	global rates, ratelimited_users
+	#If user has not taken any action in the psat 15 seconds
+	if ctx.author.id not in rates:
+		rates[ctx.author.id] = 1
+	if rates[ctx.author.id] > 45:
+		role_history = []
+		#Get mute role
+		muted_role = discord.utils.get(guild.roles, name="Muted")
+		#Get member
+		member = ctx.message.author
+		role_history += member.roles
+
+		#Remove all user roles and mute user
+		for role in member.roles:
+			if role.name != "@everyone":
+				await member.remove_roles(role)
+		await member.add_roles(muted_role)
+
+		ratelimited_users[ctx.author.id] = "Blocked."
+		await dm_user(message="You are being ratelimited and have been muted for 5 minutes as a consequence. Ratelimiting can occur when a user takes more than three actions per second.", id=ctx.author.id)
+		#Mute for 5 minutes
+		await asyncio.sleep(300)
+
+		#Add roles and unmute after 10 minutes
+		for role in role_history:
+			if role.name != "@everyone":
+				await member.add_roles(role)
+		await member.remove_roles(muted_role)
+		del ratelimited_users[ctx.author.id]
+
+@Bot.before_invoke(ratecheck)
 
 #events
 @client.event
 async def on_ready():
+	global ratetimer, rates
 	connection= client.get_channel(channel_dictionary["bot_commands"])
 	await connection.send("What's up Mixed Engineers")
 	await dm_aly()
+	while True:
+		await asyncio.sleep(1)
+		if ratetimer == 15:
+			ratetimer = 0
+			rates = {}
+		ratetimer += 1
 
 @client.event
 async def on_raw_reaction_add(payload):
+	global ratelimited_users
+	if payload.user_id in ratelimited_users:
+		return
 	Guild = client.get_guild(payload.guild_id) #gets guild object from the parameter, should work on multiple servers
 	if Guild.id != 794843921501913108: #to just keep this while its in the works on this server
 		return
-	
+
 	if payload.channel_id == 828876919936253952:
 		Channel = discord.utils.get(Guild.channels, name="📝rules")
 		Message = await Channel.fetch_message(payload.message_id)
@@ -122,10 +164,10 @@ async def on_raw_reaction_add(payload):
 			#Removes reactors reaction
 			snowflake = discord.Object(reactor.id)
 			await Message.remove_reaction(Emoji, snowflake)
-	
+
 	else:
 		return
-		
+
 @client.event
 async def on_guild_join(guild):
 	timestamp = get_timestamp()
@@ -165,7 +207,7 @@ async def on_message(message):
 
 	connection = message.channel
 	guild = client.get_guild(message.channel.guild.id)
-	
+
 	if logs_enabled and channel_creator:
 		ban_logger = discord.utils.get(connection.guild.text_channels, name="⚠ban_logs")
 		if ban_logger is None: #ADDS THESE CHANNELS TO SERVERS WITHOUT THEM
@@ -178,13 +220,13 @@ async def on_message(message):
 			await connection.guild.create_text_channel('⚠kick_logs')
 			kick_logger = discord.utils.get(connection.guild.text_channels, name="⚠kick_logs")
 			await kick_logger.set_permissions(connection.guild.default_role, send_messages=False)
-		
+
 		try:
 			kick_log_id = discord.utils.get(connection.guild.text_channels, name="⚠kick_logs").id
 			ban_log_id = discord.utils.get(connection.guild.text_channels, name="⚠ban_logs").id
 		except:
 			pass
-	
+
 	#Creates Objects From ids
 	def get_member_objects(message):
 		objects = []
@@ -238,13 +280,13 @@ async def on_message(message):
 		embed.add_field(name="Von+Submit+Project", value="Von will walk you through how to submit a user project", inline=False)
 		embed.set_thumbnail(url=client.user.avatar_url)
 		await dm_user(id=message.author.id,embed=embed)
-	
+
 	#TODO this is the main purpose of this bot, to help with event submission, this where the code will come together to use the database
 
 	elif is_calling_command(message.content, 'submit','project'):
 		def check(mess):
 			return mess.author == mess.author and mess.channel == mess.channel
-		
+
 		#PROJECT INFO COLLECTION
 
 		static_connection = message.channel
@@ -269,10 +311,10 @@ async def on_message(message):
 			await connection.send("Project Submitted Successfully!")
 
 	elif is_calling_command(message.content,'eval',current_channel=message.channel.id,allowed_channel=channel_dictionary['bot_commands']):
-		connection= client.get_channel(channel_dictionary["bot_commands"])	
+		connection= client.get_channel(channel_dictionary["bot_commands"])
 		equation = unpack_math(message.content)
 		await connection.send(f"{equation} = {eval(equation)}")
-	
+
 	elif is_calling_command(message.content,'purge') and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
 		connection= client.get_channel(message.channel.id)
 		limit = -1
@@ -321,7 +363,7 @@ async def on_message(message):
 			await connection.send(embed=embed)
 
 
-	#@KICK COMMAND	
+	#@KICK COMMAND
 	elif is_calling_command(message.content,"kick",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)) and ban_kick == True:
 		connection = client.get_channel(message.channel.id)
 		reason = get_reason(message.content);reason = "Cause we said so" if reason is None else f"Reason: {get_reason(message.content)}"
@@ -367,7 +409,7 @@ async def on_message(message):
 	elif is_calling_command(message.content,"slowmode",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
 		channel = message.channel.id # Subclass of TextChannel ABC
 		channel = discord.utils.find(lambda channel_: channel == channel_.id,guild.channels) #TextChannel ABC, has needed methods
-		
+
 		#Toggle
 		delay = get_slowmode_timer(message.content)
 		if channel.slowmode_delay == 0 and delay is None:
@@ -376,14 +418,14 @@ async def on_message(message):
 			delay = 0
 		else:
 			delay = int(get_slowmode_timer(message.content))
-		
+
 		await channel.edit(slowmode_delay = delay)
 		endis = "Disabled" if delay == 0 else "Enabled"
 		await channel.send(f"Slowmode {endis}, set to {delay} seconds")
-		
 
 
-	
+
+
 	elif is_calling_command(message.content,"timeout",prefix=prefix) and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841) and not(str(client.user.id) in get_ids(message.content) or str(message.author.id) in get_ids(message.content)):
 		#store previous roles in a list
 		role_history = []
@@ -395,14 +437,14 @@ async def on_message(message):
 		for user in users:
 			member = discord.utils.find(lambda x: x.id == user, guild.members)
 			role_history.append(member.roles)
-		
+
 		for user in users:
 			member = discord.utils.find(lambda x: x.id == user, guild.members)
 			for role in member.roles:
 				if role.name != "@everyone":
 					await member.remove_roles(role)
 			await member.add_roles(muted_role)
-		
+
 		await asyncio.sleep(mute_time*60)
 
 		for i in range(len(users)):
@@ -412,7 +454,7 @@ async def on_message(message):
 					await member.add_roles(role)
 			await member.remove_roles(muted_role)
 
-	#Funny	
+	#Funny
 	elif is_calling_command(message.content,'wake','channels') and (message.channel.permissions_for(message.author).administrator or message.author.id == 765972771418275841):
 		await message.delete()
 		for channel in channel_dictionary:
